@@ -127,7 +127,7 @@ class QuoteHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
-            html = str(payload.get("html", ""))
+            html = localize_export_html(str(payload.get("html", "")))
             width = max(320, min(int(payload.get("width", 1320)), 4000))
             height = max(320, min(int(payload.get("height", 1200)), 8000))
             filename = sanitize_filename(str(payload.get("filename", "报价单.pdf")))
@@ -1270,29 +1270,54 @@ def render_pdf(html: str, width: int, height: int) -> bytes:
         user_data = tmp_path / "chrome-profile"
         html_path.write_text(html, encoding="utf-8")
 
-        subprocess.run(
-            [
-                chrome,
-                "--headless=new",
-                "--disable-gpu",
-                "--no-sandbox",
-                "--no-first-run",
-                "--disable-extensions",
-                f"--user-data-dir={user_data}",
-                f"--window-size={width},{height}",
-                f"--print-to-pdf={pdf_path}",
-                html_path.as_uri(),
-            ],
-            cwd=str(ROOT),
-            check=True,
-            timeout=60,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        command = [
+            chrome,
+            "--headless=new",
+            "--disable-gpu",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--allow-file-access-from-files",
+            "--no-first-run",
+            "--disable-extensions",
+            "--disable-background-networking",
+            f"--user-data-dir={user_data}",
+            f"--window-size={width},{height}",
+            f"--print-to-pdf={pdf_path}",
+            html_path.as_uri(),
+        ]
+
+        try:
+            result = subprocess.run(
+                command,
+                cwd=str(ROOT),
+                timeout=90,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("Chromium 生成 PDF 超时，请检查容器是否能正常运行 Chromium") from exc
+
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip()
+            if len(detail) > 600:
+                detail = detail[-600:]
+            raise RuntimeError(f"Chromium 生成 PDF 失败：{detail or f'exit code {result.returncode}'}")
 
         if not pdf_path.exists():
             raise RuntimeError("Chrome did not create a PDF")
         return pdf_path.read_bytes()
+
+
+def localize_export_html(html: str) -> str:
+    base_href = ROOT.as_uri().rstrip("/") + "/"
+    base_tag = f'<base href="{base_href}">'
+    if re.search(r"<base\s+href=[\"'][^\"']*[\"']\s*/?>", html, flags=re.IGNORECASE):
+        return re.sub(r"<base\s+href=[\"'][^\"']*[\"']\s*/?>", base_tag, html, count=1, flags=re.IGNORECASE)
+    if re.search(r"<head([^>]*)>", html, flags=re.IGNORECASE):
+        return re.sub(r"<head([^>]*)>", rf"<head\1>{base_tag}", html, count=1, flags=re.IGNORECASE)
+    return f"<!doctype html><html><head>{base_tag}</head><body>{html}</body></html>"
 
 
 def sanitize_filename(name: str) -> str:

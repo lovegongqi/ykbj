@@ -840,7 +840,8 @@
       showToast('PDF 已打开');
     } catch (error) {
       console.error(error);
-      showToast('PDF 导出失败，请确认本地服务已启动');
+      const message = error.message || '请查看服务器日志';
+      showToast(`PDF 导出失败：${message.slice(0, 80)}`);
     } finally {
       els.exportPdfButton.disabled = false;
       els.exportPdfButton.textContent = oldText;
