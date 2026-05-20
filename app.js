@@ -807,13 +807,6 @@
     const sheet = document.getElementById('quoteSheet');
     if (!sheet) return;
 
-    const pdfWindow = window.open('', '_blank');
-    if (pdfWindow) {
-      pdfWindow.opener = null;
-      pdfWindow.document.title = '正在生成PDF';
-      pdfWindow.document.body.innerHTML = '<p style="font-family: Microsoft YaHei, Arial, sans-serif; padding: 24px;">PDF 正在生成，请稍候...</p>';
-    }
-
     els.exportPdfButton.disabled = true;
     const oldText = els.exportPdfButton.textContent;
     els.exportPdfButton.textContent = '正在导出...';
@@ -823,6 +816,7 @@
       const width = Math.ceil(sheet.getBoundingClientRect().width);
       const height = measureCompactExportHeight(sheet, width);
       const html = buildExportHtml(sheet, css, width, height);
+      const filename = buildPdfFilename();
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -830,8 +824,7 @@
           htmlBase64: encodeBase64Utf8(html),
           width,
           height,
-          filename: buildPdfFilename(),
-          returnUrl: true
+          filename
         })
       });
 
@@ -840,13 +833,10 @@
         throw new Error(cleanExportError(errorText, response.status));
       }
 
-      const result = await response.json();
-      const url = result.url;
-      if (!url) throw new Error('PDF 地址为空');
-      openGeneratedPdf(url, pdfWindow);
-      showToast('PDF 已在新标签页打开');
+      const blob = await response.blob();
+      downloadPdfBlob(blob, filename);
+      showToast('PDF 已开始下载');
     } catch (error) {
-      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
       console.error(error);
       const message = error.message || '请查看服务器日志';
       showToast(`PDF 导出失败：${message.slice(0, 80)}`);
@@ -856,13 +846,16 @@
     }
   }
 
-  function openGeneratedPdf(url, pdfWindow) {
-    if (pdfWindow && !pdfWindow.closed) {
-      pdfWindow.location.href = url;
-      return;
-    }
-    const opened = window.open(url, '_blank', 'noopener');
-    if (!opened) window.location.href = url;
+  function downloadPdfBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || '报价单.pdf';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
   function encodeBase64Utf8(value) {

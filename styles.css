@@ -756,11 +756,12 @@ textarea:focus {
 
 @media (max-width: 760px) {
   html {
-    overflow-x: hidden;
+    touch-action: pan-x pan-y pinch-zoom;
   }
 
   body {
     min-width: 0;
+    touch-action: pan-x pan-y pinch-zoom;
   }
 
   .toolbar {
@@ -814,9 +815,11 @@ textarea:focus {
   }
 
   .page {
-    overflow-x: auto;
+    min-width: 100%;
+    overflow: visible;
     padding: 10px;
-    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    width: max-content;
   }
 
   .quote-sheet {
