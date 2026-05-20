@@ -122,14 +122,14 @@ class QuoteHandler(SimpleHTTPRequestHandler):
             self.import_products()
             return
 
-        if path != "/export-pdf":
+        if path not in ("/export-pdf", "/api/export-pdf"):
             self.send_error(HTTPStatus.NOT_FOUND, "Not found")
             return
 
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
-            html = localize_export_html(str(payload.get("html", "")))
+            html = export_html_from_payload(payload)
             width = max(320, min(int(payload.get("width", 1320)), 4000))
             height = max(320, min(int(payload.get("height", 1200)), 8000))
             filename = sanitize_filename(str(payload.get("filename", "报价单.pdf")))
@@ -1356,6 +1356,18 @@ def render_pdf(html: str, width: int, height: int) -> bytes:
         if not pdf_path.exists():
             raise RuntimeError("Chrome did not create a PDF")
         return pdf_path.read_bytes()
+
+
+def export_html_from_payload(payload: dict) -> str:
+    html_base64 = str(payload.get("htmlBase64", ""))
+    if html_base64:
+        try:
+            html = base64.b64decode(html_base64.encode("ascii"), validate=True).decode("utf-8")
+        except Exception as exc:
+            raise ValueError("PDF HTML payload decode failed") from exc
+    else:
+        html = str(payload.get("html", ""))
+    return localize_export_html(html)
 
 
 def localize_export_html(html: str) -> str:

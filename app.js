@@ -816,11 +816,11 @@
       const width = Math.ceil(sheet.getBoundingClientRect().width);
       const height = Math.ceil(sheet.scrollHeight);
       const html = buildExportHtml(sheet, css, width, height);
-      const response = await fetch('/export-pdf', {
+      const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          html,
+          htmlBase64: encodeBase64Utf8(html),
           width,
           height,
           filename: buildPdfFilename(),
@@ -846,6 +846,17 @@
       els.exportPdfButton.disabled = false;
       els.exportPdfButton.textContent = oldText;
     }
+  }
+
+  function encodeBase64Utf8(value) {
+    const bytes = new TextEncoder().encode(value);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      const chunk = bytes.subarray(index, index + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
   }
 
   function cleanExportError(errorText, status) {
