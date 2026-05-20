@@ -751,6 +751,186 @@ textarea:focus {
   }
 }
 
+@media (max-width: 760px) {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+  }
+
+  .toolbar {
+    gap: 10px;
+    grid-template-columns: 1fr;
+    max-height: 56vh;
+    overflow: auto;
+    padding: 10px 12px;
+  }
+
+  .toolbar-title h1 {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .toolbar-title p {
+    font-size: 12px;
+  }
+
+  .account-panel {
+    align-items: stretch;
+    display: grid;
+    gap: 7px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .account-panel span,
+  .account-panel label {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .account-panel span {
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .toolbar-actions {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .primary-button,
+  .secondary-button {
+    min-height: 42px;
+    padding: 0 8px;
+    white-space: normal;
+    width: 100%;
+  }
+
+  .page {
+    overflow-x: auto;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-sheet {
+    box-shadow: 0 10px 26px rgba(18, 33, 25, 0.12);
+    min-height: 0;
+    padding: 12px 12px 0;
+    width: 1180px;
+  }
+
+  .sheet-brand-row {
+    min-height: 158px;
+  }
+
+  .logo-box {
+    height: 152px;
+  }
+
+  .logo-box img {
+    max-height: 148px;
+  }
+
+  .sheet-title {
+    font-size: 30px;
+  }
+
+  .seller-row input,
+  .customer-grid input,
+  .terms-grid input {
+    min-height: 34px;
+  }
+
+  .col-index {
+    width: 42px;
+  }
+
+  .col-name {
+    width: 76px;
+  }
+
+  .col-model {
+    width: 78px;
+  }
+
+  .col-image {
+    width: 72px;
+  }
+
+  .col-unit {
+    width: 42px;
+  }
+
+  .col-price,
+  .col-subtotal {
+    width: 62px;
+  }
+
+  .col-qty {
+    width: 48px;
+  }
+
+  .col-location {
+    width: 102px;
+  }
+
+  .col-filter {
+    width: 96px;
+  }
+
+  .col-detail {
+    width: 214px;
+  }
+
+  .col-feature {
+    width: 256px;
+  }
+
+  .remove-row {
+    height: 28px;
+    right: 4px;
+    top: 4px;
+    width: 28px;
+  }
+
+  .cell-input,
+  .cell-textarea,
+  .row-category-picker,
+  .row-product-search {
+    font-size: 13px;
+    min-height: 36px;
+  }
+
+  .cell-textarea {
+    min-height: 104px;
+  }
+
+  .add-product-row select,
+  .add-product-row input,
+  .add-product-row .primary-button {
+    font-size: 13px;
+    min-height: 38px;
+  }
+
+  .image-cell button {
+    min-height: 98px;
+  }
+
+  .terms-grid {
+    gap: 7px 12px;
+  }
+
+  .toast {
+    max-width: calc(100vw - 24px);
+    text-align: center;
+    width: max-content;
+  }
+}
+
 @media print {
   @page {
     margin: 5mm;

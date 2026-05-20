@@ -196,3 +196,73 @@ input:focus {
   position: fixed;
   transform: translateX(-50%);
 }
+
+@media (max-width: 760px) {
+  body {
+    min-width: 0;
+  }
+
+  .records-header {
+    align-items: stretch;
+    display: grid;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .records-header h1 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .header-actions span {
+    flex: 1 1 100%;
+    white-space: normal;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .danger-button {
+    min-height: 42px;
+    padding: 0 10px;
+  }
+
+  .header-actions .primary-button,
+  .header-actions .secondary-button {
+    flex: 1 1 calc(50% - 7px);
+  }
+
+  .records-main {
+    padding: 10px;
+  }
+
+  .records-panel {
+    padding: 12px;
+  }
+
+  .records-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .records-table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .records-table {
+    min-width: 820px;
+  }
+
+  .record-actions {
+    flex-wrap: wrap;
+  }
+
+  .toast {
+    max-width: calc(100vw - 24px);
+    text-align: center;
+    width: max-content;
+  }
+}

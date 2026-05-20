@@ -91,3 +91,28 @@ button:hover {
   min-height: 18px;
   margin-top: 12px;
 }
+
+@media (max-width: 480px) {
+  body {
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .login-card {
+    align-self: center;
+    padding: 22px;
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+
+  input {
+    min-height: 44px;
+  }
+
+  button {
+    min-height: 46px;
+  }
+}

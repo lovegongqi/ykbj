@@ -522,3 +522,130 @@ textarea:focus {
   position: fixed;
   transform: translateX(-50%);
 }
+
+@media (max-width: 900px) {
+  body {
+    min-width: 0;
+  }
+
+  .manage-header {
+    align-items: stretch;
+    display: grid;
+    gap: 10px;
+    max-height: 54vh;
+    overflow: auto;
+    padding: 10px 12px;
+  }
+
+  .manage-header h1 {
+    font-size: 20px;
+  }
+
+  .header-actions,
+  .account-panel,
+  .editor-actions {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .account-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .account-panel span,
+  .account-panel label {
+    grid-column: 1 / -1;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .danger-button {
+    min-height: 42px;
+    padding: 0 10px;
+  }
+
+  .header-actions .primary-button,
+  .header-actions .secondary-button,
+  .header-actions .danger-button,
+  .account-panel .secondary-button {
+    flex: 1 1 calc(50% - 7px);
+  }
+
+  .manage-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .product-list-panel {
+    max-height: none;
+    padding: 12px;
+    position: static;
+  }
+
+  .category-list {
+    max-height: 190px;
+  }
+
+  .product-list button,
+  .category-list button {
+    min-height: 48px;
+    padding: 10px;
+  }
+
+  .sort-actions {
+    justify-content: flex-start;
+  }
+
+  .editor-panel {
+    padding: 12px;
+  }
+
+  .import-panel,
+  .admin-panel,
+  .user-panel,
+  .quote-record-panel {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .user-panel-heading,
+  .quote-record-heading,
+  .editor-heading {
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+  }
+
+  .quote-record-heading input {
+    max-width: none;
+  }
+
+  .user-row,
+  .quote-record-row {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .product-form {
+    grid-template-columns: 1fr;
+  }
+
+  .image-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-card {
+    grid-template-columns: 90px 1fr;
+  }
+
+  .toast {
+    max-width: calc(100vw - 24px);
+    text-align: center;
+    width: max-content;
+  }
+}
