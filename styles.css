@@ -621,7 +621,10 @@ textarea:focus {
 }
 
 .sheet-bottom {
-  margin-top: auto;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  margin-top: 12px;
 }
 
 .terms-grid {
@@ -629,7 +632,7 @@ textarea:focus {
   font-size: 13px;
   gap: 8px 18px;
   grid-template-columns: 1fr 1fr;
-  margin-top: 18px;
+  margin: 0 0 14px;
 }
 
 .terms-grid label {
@@ -652,7 +655,7 @@ textarea:focus {
   aspect-ratio: 1079 / 278;
   display: flex;
   justify-content: center;
-  margin: 14px -18px 0;
+  margin: auto -18px 0;
   min-height: 0;
   overflow: hidden;
 }
@@ -1036,12 +1039,19 @@ textarea:focus {
 
   .terms-grid {
     font-size: 10px;
+    margin: 0 0 8px;
+  }
+
+  .sheet-bottom {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
     margin-top: 8px;
   }
 
   .sheet-tail-image {
     aspect-ratio: 1079 / 278;
-    margin: 8px 0 0;
+    margin: auto 0 0;
     min-height: 0;
     overflow: hidden;
   }
