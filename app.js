@@ -289,12 +289,17 @@
         return;
       }
       if (event.target.dataset.field === 'price') {
-        maybeSyncProductPrice(event.target.dataset.quoteId);
+        commitQuotePriceEdit(event.target);
       }
     });
 
     els.quoteTableBody.addEventListener('focusin', (event) => {
       if (event.target.id === 'productSearch' || event.target.dataset.rowProductId) event.target.select();
+      if (event.target.dataset.field === 'price') rememberQuotePriceBeforeEdit(event.target);
+    });
+
+    els.quoteTableBody.addEventListener('focusout', (event) => {
+      if (event.target.dataset.field === 'price') commitQuotePriceEdit(event.target);
     });
 
     els.closeImageDialog.addEventListener('click', () => els.imageDialog.close());
@@ -655,8 +660,8 @@
         <td class="money-display row-total">${money(subtotal)}</td>
         <td>${editableTextCell(item, 'location')}</td>
         <td>${editableTextCell(item, 'filterLife')}</td>
-        <td>${editableTextCell(item, 'details')}</td>
-        <td>${editableTextCell(item, 'features')}</td>
+        <td>${managedTextCell(item, 'details')}</td>
+        <td>${managedTextCell(item, 'features')}</td>
       </tr>
     `;
   }
@@ -669,7 +674,21 @@
     `;
   }
 
+  function managedTextCell(item, field) {
+    const value = managedQuoteText(item, field);
+    return `<div class="cell-readonly-text">${escapeHtml(value)}</div>`;
+  }
+
+  function managedQuoteText(item, field) {
+    const product = products.find((entry) => entry.id === item.productId)
+      || products.find((entry) => entry.model && entry.model === item.model)
+      || null;
+    const source = product ? product[field] : item[field];
+    return field === 'details' ? summarizeDetails(source || '') : summarizeFeatures(source || '');
+  }
+
   function updateQuoteItem(quoteId, field, value, row) {
+    if (field === 'details' || field === 'features') return;
     const item = state.quote.find((entry) => entry.quoteId === quoteId);
     if (!item) return;
 
@@ -690,6 +709,23 @@
 
     if (field !== 'price' && field !== 'qty' && row) autoSizeTextareas(row);
     persistQuote();
+  }
+
+  function rememberQuotePriceBeforeEdit(input) {
+    input.dataset.originalPrice = String(toNumber(input.value));
+  }
+
+  function commitQuotePriceEdit(input) {
+    if (!input || input.dataset.field !== 'price') return;
+    const before = input.dataset.originalPrice === undefined ? toNumber(input.defaultValue) : toNumber(input.dataset.originalPrice);
+    if (String(input.value || '').trim() === '') {
+      input.dataset.originalPrice = '0';
+      return;
+    }
+    const after = toNumber(input.value);
+    if (before === after) return;
+    input.dataset.originalPrice = String(after);
+    maybeSyncProductPrice(input.dataset.quoteId);
   }
 
   async function maybeSyncProductPrice(quoteId) {
@@ -1113,14 +1149,14 @@
   }
 
   function formatQuoteTextIfNeeded(item) {
-    if (item.textFormatVersion === textFormatVersion) return item;
     const product = products.find((entry) => entry.id === item.productId)
       || products.find((entry) => entry.model && entry.model === item.model)
-      || {};
+      || null;
+    if (!product && item.textFormatVersion === textFormatVersion) return item;
     return {
       ...item,
-      details: summarizeDetails(product.details || item.details || ''),
-      features: summarizeFeatures(product.features || item.features || ''),
+      details: summarizeDetails((product && product.details) || item.details || ''),
+      features: summarizeFeatures((product && product.features) || item.features || ''),
       textFormatVersion
     };
   }

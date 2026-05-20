@@ -499,6 +499,14 @@ textarea:focus {
   resize: vertical;
 }
 
+.cell-readonly-text {
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 94px;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
 .quote-table tbody td:nth-child(9),
 .quote-table tbody td:nth-child(10),
 .quote-table tbody td:nth-child(9) .cell-textarea,
@@ -763,7 +771,7 @@ textarea:focus {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (pointer: coarse) {
   html {
     touch-action: pan-x pan-y pinch-zoom;
   }
@@ -1069,6 +1077,14 @@ textarea:focus {
     line-height: 1.42;
     min-height: 20px;
     overflow: visible;
+    white-space: pre-line;
+    word-break: break-word;
+  }
+
+  .cell-readonly-text {
+    font-size: 9px;
+    line-height: 1.42;
+    min-height: 20px;
     white-space: pre-line;
     word-break: break-word;
   }
