@@ -1423,8 +1423,6 @@ def render_pdf(html: str, width: int, height: int) -> bytes:
     chrome = find_chrome()
     if not chrome:
         raise RuntimeError("Chrome or Edge was not found")
-    height = measure_export_height(chrome, html, width, height)
-    html = replace_export_height(html, width, height)
 
     with tempfile.TemporaryDirectory(prefix="quote-pdf-") as tmp:
         tmp_path = Path(tmp)
@@ -1471,85 +1469,6 @@ def render_pdf(html: str, width: int, height: int) -> bytes:
         if not pdf_path.exists():
             raise RuntimeError("Chrome did not create a PDF")
         return pdf_path.read_bytes()
-
-
-def measure_export_height(chrome: str, html: str, width: int, fallback_height: int) -> int:
-    script = """
-      <script>
-        (() => {
-          const measure = () => {
-            const sheet = document.querySelector('.quote-sheet') || document.body;
-            const tail = document.querySelector('.sheet-tail-image');
-            const sheetRect = sheet.getBoundingClientRect();
-            const targetRect = tail ? tail.getBoundingClientRect() : sheetRect;
-            const height = Math.ceil((targetRect.bottom || sheetRect.bottom) - sheetRect.top);
-            document.body.innerHTML = `<pre id="export-height">${Math.max(320, height)}</pre>`;
-          };
-          if (document.readyState === 'complete') {
-            window.setTimeout(measure, 120);
-          } else {
-            window.addEventListener('load', () => window.setTimeout(measure, 120));
-          }
-        })();
-      </script>
-    """
-    marker = re.search(r"</body\s*>", html, re.IGNORECASE)
-    measure_html = html[: marker.start()] + script + html[marker.start():] if marker else html + script
-
-    with tempfile.TemporaryDirectory(prefix="quote-pdf-measure-") as tmp:
-        tmp_path = Path(tmp)
-        html_path = tmp_path / "quote-measure.html"
-        user_data = tmp_path / "chrome-profile"
-        html_path.write_text(measure_html, encoding="utf-8")
-        command = [
-            chrome,
-            "--headless=new",
-            "--disable-gpu",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--allow-file-access-from-files",
-            "--no-first-run",
-            "--disable-extensions",
-            "--disable-background-networking",
-            f"--user-data-dir={user_data}",
-            "--virtual-time-budget=1600",
-            "--dump-dom",
-            f"--window-size={width},{max(fallback_height, 1200)}",
-            html_path.as_uri(),
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                cwd=str(ROOT),
-                timeout=90,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-        except subprocess.TimeoutExpired:
-            return fallback_height
-    if result.returncode != 0:
-        return fallback_height
-    match = re.search(r'<pre id="export-height">(\d+)</pre>', result.stdout or "")
-    if not match:
-        return fallback_height
-    return max(320, min(int(match.group(1)), 8000))
-
-
-def replace_export_height(html: str, width: int, height: int) -> str:
-    html = re.sub(
-        r"(@page\s*\{\s*size:\s*)\d+px\s+\d+px(\s*;\s*margin:\s*0\s*;\s*\})",
-        rf"\g<1>{width}px {height}px\2",
-        html,
-        flags=re.IGNORECASE,
-    )
-    return re.sub(
-        r"height:\s*\d+px(\s*!important)?(?=\s*;\s*margin:\s*0)",
-        lambda match: f"height: {height}px{match.group(1) or ''}",
-        html,
-        flags=re.IGNORECASE,
-    )
 
 
 def export_html_from_payload(payload: dict) -> str:
