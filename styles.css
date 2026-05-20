@@ -794,21 +794,29 @@ textarea:focus {
   }
 
   .account-panel {
-    align-items: stretch;
-    display: grid;
-    gap: 7px;
-    grid-template-columns: 1fr;
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
 
   .account-panel span,
   .account-panel label {
-    grid-column: 1 / -1;
     min-width: 0;
   }
 
   .account-panel span {
-    line-height: 1.35;
-    white-space: normal;
+    line-height: 36px;
+    white-space: nowrap;
+  }
+
+  .account-panel label {
+    min-width: 150px;
+  }
+
+  .account-panel .secondary-button {
+    min-width: 92px;
+    width: auto;
   }
 
   .toolbar-actions {
