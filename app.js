@@ -1016,19 +1016,11 @@
     if (terms) terms.style.margin = '0 0 14px';
 
     const tail = clone.querySelector('.sheet-tail-image');
-    if (tail) {
-      Object.assign(tail.style, {
-        aspectRatio: '1079 / 278',
-        height: 'auto',
-        margin: '14px -18px 0'
-      });
-    }
+    if (tail) tail.style.margin = '14px -18px 0';
 
     host.appendChild(clone);
     document.body.appendChild(host);
-    const cloneRect = clone.getBoundingClientRect();
-    const tailRect = tail ? tail.getBoundingClientRect() : null;
-    const measured = Math.floor((tailRect ? tailRect.bottom : cloneRect.bottom) - cloneRect.top - 1);
+    const measured = Math.ceil(clone.getBoundingClientRect().height + 4);
     host.remove();
     return Math.max(320, measured);
   }
