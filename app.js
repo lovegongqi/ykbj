@@ -1020,7 +1020,7 @@
 
     host.appendChild(clone);
     document.body.appendChild(host);
-    const measured = Math.ceil(clone.getBoundingClientRect().height + 4);
+    const measured = Math.ceil(clone.getBoundingClientRect().height);
     host.remove();
     return Math.max(320, measured);
   }
