@@ -876,7 +876,7 @@
       const css = await fetch('styles.css', { cache: 'no-store' }).then((response) => response.text());
       const width = Math.ceil(sheet.getBoundingClientRect().width);
       const useDownloadUrl = isAppleMobileBrowser();
-      const height = measureCompactExportHeight(sheet, width);
+      const height = measurePdfExportHeight(sheet, width);
       const html = buildExportHtml(sheet, css, width, height);
       const filename = buildPdfFilename();
       const response = await fetch('/api/export-pdf', {
@@ -978,7 +978,7 @@
     return raw.replace(/\s+/g, ' ').slice(0, 240);
   }
 
-  function measureCompactExportHeight(sheet, width) {
+  function measurePdfExportHeight(sheet, width) {
     const clone = sheet.cloneNode(true);
     prepareExportClone(clone);
 
@@ -996,7 +996,7 @@
       boxShadow: 'none',
       height: 'auto',
       margin: '0',
-      minHeight: '0',
+      minHeight: '1120px',
       overflow: 'visible',
       padding: '18px 18px 0',
       width: `${width}px`,
@@ -1006,21 +1006,94 @@
     const bottom = clone.querySelector('.sheet-bottom');
     if (bottom) {
       Object.assign(bottom.style, {
-        display: 'block',
-        flex: '0 0 auto',
+        display: 'flex',
+        flex: '1 0 auto',
+        flexDirection: 'column',
         marginTop: '12px'
       });
     }
 
     const terms = clone.querySelector('.terms-grid');
-    if (terms) terms.style.margin = '0 0 14px';
+    if (terms) {
+      Object.assign(terms.style, {
+        fontSize: '13px',
+        gap: '8px 18px',
+        margin: '0 0 14px'
+      });
+    }
+
+    clone.querySelectorAll('.cell-readonly-text').forEach((node) => {
+      Object.assign(node.style, {
+        fontSize: '12px',
+        lineHeight: '1.35',
+        minHeight: '94px',
+        whiteSpace: 'pre-line',
+        wordBreak: 'break-word'
+      });
+    });
+
+    clone.querySelectorAll('.export-value').forEach((node) => {
+      Object.assign(node.style, {
+        display: 'block',
+        whiteSpace: 'pre-line',
+        wordBreak: 'break-word'
+      });
+    });
+
+    clone.querySelectorAll('.quote-table th, .quote-table td').forEach((cell) => {
+      Object.assign(cell.style, {
+        fontSize: '12px',
+        lineHeight: '1.35',
+        padding: '5px'
+      });
+    });
+
+    clone.querySelectorAll('.quote-table th').forEach((cell) => {
+      Object.assign(cell.style, {
+        fontSize: '13px',
+        height: '34px'
+      });
+    });
+
+    clone.querySelectorAll('.image-cell').forEach((cell) => {
+      Object.assign(cell.style, {
+        height: '104px',
+        padding: '3px'
+      });
+    });
+
+    clone.querySelectorAll('.image-cell img').forEach((img) => {
+      Object.assign(img.style, {
+        height: '94px',
+        objectFit: 'contain'
+      });
+    });
 
     const tail = clone.querySelector('.sheet-tail-image');
-    if (tail) tail.style.margin = '14px -18px 0';
+    if (tail) {
+      Object.assign(tail.style, {
+        alignItems: 'flex-start',
+        aspectRatio: '1079 / 278',
+        height: 'auto',
+        margin: 'auto -18px 0',
+        minHeight: '0',
+        overflow: 'hidden'
+      });
+    }
+
+    const tailImage = tail ? tail.querySelector('img') : null;
+    if (tailImage) {
+      Object.assign(tailImage.style, {
+        flex: '0 0 auto',
+        height: 'auto',
+        maxHeight: 'none',
+        width: '100%'
+      });
+    }
 
     host.appendChild(clone);
     document.body.appendChild(host);
-    const measured = Math.ceil(clone.getBoundingClientRect().height);
+    const measured = Math.floor(clone.getBoundingClientRect().height - 18);
     host.remove();
     return Math.max(320, measured);
   }
@@ -1033,33 +1106,40 @@
       @page { size: ${width}px ${height}px; margin: 0; }
       @media print {
         html, body { height: ${height}px !important; margin: 0 !important; overflow: hidden !important; padding: 0 !important; width: ${width}px !important; min-width: 0 !important; background: #ffffff !important; }
-        .quote-sheet { box-shadow: none !important; height: auto !important; margin: 0 !important; min-height: 0 !important; overflow: visible !important; padding: 18px 18px 0 !important; width: ${width}px !important; zoom: 1 !important; }
+        .quote-sheet { box-shadow: none !important; display: flex !important; flex-direction: column !important; height: auto !important; margin: 0 !important; min-height: 1120px !important; overflow: visible !important; padding: 18px 18px 0 !important; width: ${width}px !important; zoom: 1 !important; }
         .no-print, .toolbar, .image-dialog, .remove-row, .dialog-close, .print-cell-text { display: none !important; }
         .sheet-brand-row { min-height: 190px !important; }
         .logo-box { height: 184px !important; }
         .logo-box img { max-height: 180px !important; }
         .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: auto -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
         .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
-        .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
-        .terms-grid { margin: 0 0 14px !important; }
+        .sheet-bottom { display: flex !important; flex: 1 0 auto !important; flex-direction: column !important; margin-top: 12px !important; }
+        .terms-grid { font-size: 13px !important; gap: 8px 18px !important; margin: 0 0 14px !important; }
         .export-value { display: block !important; white-space: pre-line !important; word-break: break-word !important; }
         .quote-table th, .quote-table td { font-size: 12px !important; line-height: 1.35 !important; padding: 5px !important; }
-        .image-cell { height: 104px !important; }
-        .image-cell img { height: 94px !important; object-fit: contain !important; }
+        .quote-table th { font-size: 13px !important; height: 34px !important; }
+        .cell-readonly-text { font-size: 12px !important; line-height: 1.35 !important; min-height: 94px !important; white-space: pre-line !important; word-break: break-word !important; }
+        .image-cell { height: 104px !important; padding: 3px !important; }
+        .image-cell img { height: 94px !important; object-fit: contain !important; width: 100% !important; }
       }
       html, body { height: ${height}px; margin: 0; overflow: hidden; padding: 0; width: ${width}px; background: #ffffff; }
-      .quote-sheet { box-shadow: none !important; height: auto !important; margin: 0 !important; min-height: 0 !important; overflow: visible !important; }
+      .quote-sheet { box-shadow: none !important; display: flex !important; flex-direction: column !important; height: auto !important; margin: 0 !important; min-height: 1120px !important; overflow: visible !important; padding: 18px 18px 0 !important; width: ${width}px !important; }
       .no-print, .toolbar, .image-dialog, .remove-row, .dialog-close, .print-cell-text { display: none !important; }
       .sheet-brand-row { min-height: 190px !important; }
       .logo-box { height: 184px !important; }
       .logo-box img { max-height: 180px !important; }
       .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: auto -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
       .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
-      .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
-      .terms-grid { margin: 0 0 14px !important; }
+      .sheet-bottom { display: flex !important; flex: 1 0 auto !important; flex-direction: column !important; margin-top: 12px !important; }
+      .terms-grid { font-size: 13px !important; gap: 8px 18px !important; margin: 0 0 14px !important; }
       .export-value { white-space: pre-line; word-break: break-word; }
+      .quote-table th, .quote-table td { font-size: 12px !important; line-height: 1.35 !important; padding: 5px !important; }
+      .quote-table th { font-size: 13px !important; height: 34px !important; }
+      .cell-readonly-text { font-size: 12px !important; line-height: 1.35 !important; min-height: 94px !important; white-space: pre-line !important; word-break: break-word !important; }
+      .image-cell { height: 104px !important; padding: 3px !important; }
+      .image-cell img { height: 94px !important; object-fit: contain !important; width: 100% !important; }
     `;
 
     return `<!doctype html>
