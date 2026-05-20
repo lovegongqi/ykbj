@@ -814,7 +814,7 @@ textarea:focus {
   .toolbar-actions {
     display: grid;
     gap: 7px;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     width: 100%;
   }
 
@@ -822,7 +822,7 @@ textarea:focus {
   .secondary-button {
     min-height: 42px;
     padding: 0 8px;
-    white-space: normal;
+    white-space: nowrap;
     width: 100%;
   }
 
