@@ -499,6 +499,15 @@ textarea:focus {
   resize: vertical;
 }
 
+.quote-table tbody td:nth-child(9),
+.quote-table tbody td:nth-child(10),
+.quote-table tbody td:nth-child(9) .cell-textarea,
+.quote-table tbody td:nth-child(10) .cell-textarea,
+.quote-table tbody td:nth-child(9) .print-cell-text,
+.quote-table tbody td:nth-child(10) .print-cell-text {
+  text-align: center;
+}
+
 .print-cell-text {
   display: none;
 }
