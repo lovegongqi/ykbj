@@ -1,0 +1,19 @@
+services:
+  quote-site:
+    image: ghcr.io/lovegongqi/ykbj:latest
+    container_name: ecowater-quote-site
+    restart: unless-stopped
+    environment:
+      CHROME_PATH: /usr/bin/chromium
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "4173:4173"
+    volumes:
+      - quote-data:/app/data
+      - quote-uploads:/app/assets/custom-products
+      - quote-pdfs:/app/generated-pdfs
+
+volumes:
+  quote-data:
+  quote-uploads:
+  quote-pdfs:
