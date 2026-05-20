@@ -981,6 +981,7 @@
   function measureCompactExportHeight(sheet, width) {
     const clone = sheet.cloneNode(true);
     prepareExportClone(clone);
+    const tailHeight = exportTailHeight(width);
 
     const host = document.createElement('div');
     host.style.cssText = [
@@ -1019,7 +1020,7 @@
     if (tail) {
       Object.assign(tail.style, {
         aspectRatio: '1079 / 278',
-        height: 'auto',
+        height: `${tailHeight}px`,
         margin: '14px -18px 0'
       });
     }
@@ -1037,6 +1038,7 @@
     const clone = sheet.cloneNode(true);
     prepareExportClone(clone);
     const baseHref = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}`;
+    const tailHeight = exportTailHeight(width);
     const exportCss = `
       @page { size: ${width}px ${height}px; margin: 0; }
       @media print {
@@ -1047,7 +1049,7 @@
         .logo-box { height: 184px !important; }
         .logo-box img { max-height: 180px !important; }
         .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: auto !important; height: ${tailHeight}px !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
         .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
         .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
         .terms-grid { margin: 0 0 14px !important; }
@@ -1063,7 +1065,7 @@
       .logo-box { height: 184px !important; }
       .logo-box img { max-height: 180px !important; }
       .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: auto !important; height: ${tailHeight}px !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
       .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
       .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
       .terms-grid { margin: 0 0 14px !important; }
@@ -1081,6 +1083,10 @@
         </head>
         <body>${clone.outerHTML}</body>
       </html>`;
+  }
+
+  function exportTailHeight(width) {
+    return Math.round((Number(width) || 1180) * 278 / 1079);
   }
 
   function prepareExportClone(clone) {
