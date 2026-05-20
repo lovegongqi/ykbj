@@ -814,8 +814,7 @@
     try {
       const css = await fetch('styles.css', { cache: 'no-store' }).then((response) => response.text());
       const width = Math.ceil(sheet.getBoundingClientRect().width);
-      // A tiny guard avoids Chromium adding a blank page for sub-pixel overflow.
-      const height = Math.ceil(sheet.scrollHeight + 4);
+      const height = measureCompactExportHeight(sheet, width);
       const html = buildExportHtml(sheet, css, width, height);
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -873,6 +872,53 @@
     return raw.replace(/\s+/g, ' ').slice(0, 240);
   }
 
+  function measureCompactExportHeight(sheet, width) {
+    const clone = sheet.cloneNode(true);
+    prepareExportClone(clone);
+
+    const host = document.createElement('div');
+    host.style.cssText = [
+      'background:#fff',
+      'left:-100000px',
+      'position:absolute',
+      'top:0',
+      'visibility:hidden',
+      `width:${width}px`
+    ].join(';');
+
+    Object.assign(clone.style, {
+      boxShadow: 'none',
+      height: 'auto',
+      margin: '0',
+      minHeight: '0',
+      overflow: 'visible',
+      padding: '18px 18px 0',
+      width: `${width}px`,
+      zoom: '1'
+    });
+
+    const bottom = clone.querySelector('.sheet-bottom');
+    if (bottom) {
+      Object.assign(bottom.style, {
+        display: 'block',
+        flex: '0 0 auto',
+        marginTop: '12px'
+      });
+    }
+
+    const terms = clone.querySelector('.terms-grid');
+    if (terms) terms.style.margin = '0 0 14px';
+
+    const tail = clone.querySelector('.sheet-tail-image');
+    if (tail) tail.style.margin = '14px -18px 0';
+
+    host.appendChild(clone);
+    document.body.appendChild(host);
+    const measured = Math.ceil(clone.getBoundingClientRect().height + 4);
+    host.remove();
+    return Math.max(320, measured);
+  }
+
   function buildExportHtml(sheet, css, width, height) {
     const clone = sheet.cloneNode(true);
     prepareExportClone(clone);
@@ -881,15 +927,15 @@
       @page { size: ${width}px ${height}px; margin: 0; }
       @media print {
         html, body { height: ${height}px !important; margin: 0 !important; overflow: hidden !important; padding: 0 !important; width: ${width}px !important; min-width: 0 !important; background: #ffffff !important; }
-        .quote-sheet { box-shadow: none !important; height: ${height}px !important; margin: 0 !important; min-height: ${height}px !important; overflow: hidden !important; padding: 18px 18px 0 !important; width: ${width}px !important; zoom: 1 !important; }
+        .quote-sheet { box-shadow: none !important; height: auto !important; margin: 0 !important; min-height: 0 !important; overflow: visible !important; padding: 18px 18px 0 !important; width: ${width}px !important; zoom: 1 !important; }
         .no-print, .toolbar, .image-dialog, .remove-row, .dialog-close, .print-cell-text { display: none !important; }
         .sheet-brand-row { min-height: 190px !important; }
         .logo-box { height: 184px !important; }
         .logo-box img { max-height: 180px !important; }
         .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: auto -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
         .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
-        .sheet-bottom { display: flex !important; flex: 1 0 auto !important; flex-direction: column !important; margin-top: 12px !important; }
+        .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
         .terms-grid { margin: 0 0 14px !important; }
         .export-value { display: block !important; white-space: pre-line !important; word-break: break-word !important; }
         .quote-table th, .quote-table td { font-size: 12px !important; line-height: 1.35 !important; padding: 5px !important; }
@@ -897,15 +943,15 @@
         .image-cell img { height: 94px !important; object-fit: contain !important; }
       }
       html, body { height: ${height}px; margin: 0; overflow: hidden; padding: 0; width: ${width}px; background: #ffffff; }
-      .quote-sheet { box-shadow: none !important; height: ${height}px !important; margin: 0 !important; min-height: ${height}px; overflow: hidden !important; }
+      .quote-sheet { box-shadow: none !important; height: auto !important; margin: 0 !important; min-height: 0 !important; overflow: visible !important; }
       .no-print, .toolbar, .image-dialog, .remove-row, .dialog-close, .print-cell-text { display: none !important; }
       .sheet-brand-row { min-height: 190px !important; }
       .logo-box { height: 184px !important; }
       .logo-box img { max-height: 180px !important; }
       .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: auto -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
       .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
-      .sheet-bottom { display: flex !important; flex: 1 0 auto !important; flex-direction: column !important; margin-top: 12px !important; }
+      .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
       .terms-grid { margin: 0 0 14px !important; }
       .export-value { white-space: pre-line; word-break: break-word; }
     `;
