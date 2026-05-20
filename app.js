@@ -1028,7 +1028,7 @@
     document.body.appendChild(host);
     const cloneRect = clone.getBoundingClientRect();
     const tailRect = tail ? tail.getBoundingClientRect() : null;
-    const measured = Math.ceil(((tailRect ? tailRect.bottom : cloneRect.bottom) - cloneRect.top) + 1);
+    const measured = Math.floor((tailRect ? tailRect.bottom : cloneRect.bottom) - cloneRect.top - 1);
     host.remove();
     return Math.max(320, measured);
   }
