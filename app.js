@@ -888,6 +888,8 @@
         .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
         .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
         .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
+        .sheet-bottom { margin-top: 12px !important; }
+        .terms-grid { margin-top: 0 !important; }
         .export-value { display: block !important; white-space: pre-line !important; word-break: break-word !important; }
         .quote-table th, .quote-table td { font-size: 12px !important; line-height: 1.35 !important; padding: 5px !important; }
         .image-cell { height: 104px !important; }
@@ -902,6 +904,8 @@
       .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
       .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
       .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
+      .sheet-bottom { margin-top: 12px !important; }
+      .terms-grid { margin-top: 0 !important; }
       .export-value { white-space: pre-line; word-break: break-word; }
     `;
 
@@ -919,6 +923,7 @@
   }
 
   function prepareExportClone(clone) {
+    preserveSelectableCellText(clone);
     clone.querySelectorAll('.print-cell-text').forEach((node) => node.remove());
     clone.querySelectorAll('.no-print, .remove-row').forEach((node) => node.remove());
 
@@ -948,6 +953,26 @@
       const img = button.querySelector('img');
       if (img) button.replaceWith(img.cloneNode(true));
     });
+  }
+
+  function preserveSelectableCellText(clone) {
+    clone.querySelectorAll('.row-category-picker, .row-product-search').forEach((control) => {
+      const cell = control.closest('td');
+      if (!cell) return;
+      const printText = cell.querySelector('.print-cell-text')?.textContent || '';
+      const fallback = control.tagName === 'SELECT'
+        ? control.selectedOptions[0]?.textContent || control.value || ''
+        : productModelFromLabel(control.value || '');
+      const div = document.createElement('div');
+      div.className = 'export-value';
+      div.textContent = printText.trim() || fallback;
+      cell.textContent = '';
+      cell.appendChild(div);
+    });
+  }
+
+  function productModelFromLabel(value) {
+    return String(value || '').split('|')[0].trim();
   }
 
   function buildPdfFilename() {
