@@ -5,11 +5,12 @@ services:
     restart: unless-stopped
     environment:
       CHROME_PATH: /usr/bin/chromium
+      QUOTE_DATA_DIR: /app/runtime-data
       PYTHONUNBUFFERED: "1"
     ports:
       - "4173:4173"
     volumes:
-      - quote-data:/app/data
+      - quote-data:/app/runtime-data
       - quote-uploads:/app/assets/custom-products
       - quote-pdfs:/app/generated-pdfs
 

@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 RUN adduser --system --group --home /app appuser \
-    && mkdir -p generated-pdfs assets/custom-products data/user-products data/user-quotes \
+    && mkdir -p generated-pdfs assets/custom-products runtime-data/user-products runtime-data/user-quotes \
     && chown -R appuser:appuser /app
 
 USER appuser

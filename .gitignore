@@ -10,6 +10,8 @@ generated-pdfs/*
 assets/custom-products/*
 !assets/custom-products/.gitkeep
 
+runtime-data/*
+
 data/users.json
 data/user-products/*
 !data/user-products/.gitkeep

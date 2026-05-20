@@ -22,12 +22,14 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 ROOT = Path(__file__).resolve().parent
 EXPORT_DIR = ROOT / "generated-pdfs"
-CUSTOM_PRODUCTS_FILE = ROOT / "data" / "custom-products.json"
+RUNTIME_DATA_DIR = Path(os.environ.get("QUOTE_DATA_DIR", ROOT / "data")).resolve()
+BUNDLED_CUSTOM_PRODUCTS_FILE = ROOT / "data" / "custom-products.json"
+CUSTOM_PRODUCTS_FILE = RUNTIME_DATA_DIR / "custom-products.json"
 UPLOAD_DIR = ROOT / "assets" / "custom-products"
-USERS_FILE = ROOT / "data" / "users.json"
+USERS_FILE = RUNTIME_DATA_DIR / "users.json"
 BASE_CATALOG_FILE = ROOT / "data" / "catalog.json"
-USER_PRODUCTS_DIR = ROOT / "data" / "user-products"
-USER_QUOTES_DIR = ROOT / "data" / "user-quotes"
+USER_PRODUCTS_DIR = RUNTIME_DATA_DIR / "user-products"
+USER_QUOTES_DIR = RUNTIME_DATA_DIR / "user-quotes"
 SESSION_COOKIE = "quote_session"
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "66778899"
@@ -174,6 +176,12 @@ class QuoteHandler(SimpleHTTPRequestHandler):
                 return
             self.send_session(user)
             return
+        if path == "/api/health":
+            self.send_health()
+            return
+        if path == "/api/pdf-health":
+            self.send_pdf_health()
+            return
 
         if self.requires_login(path) and not self.current_user():
             self.redirect("/login.html")
@@ -305,6 +313,33 @@ class QuoteHandler(SimpleHTTPRequestHandler):
             return
         query = (parse_qs(urlparse(self.path).query).get("q") or [""])[0]
         self.send_json({"records": quote_records(query)})
+
+    def send_health(self) -> None:
+        chrome = find_chrome()
+        self.send_json(
+            {
+                "ok": True,
+                "root": str(ROOT),
+                "runtimeDataDir": str(RUNTIME_DATA_DIR),
+                "chrome": chrome,
+                "chromeExists": bool(chrome and Path(chrome).exists()),
+                "catalogExists": BASE_CATALOG_FILE.exists(),
+                "exportDirWritable": is_writable_dir(EXPORT_DIR),
+                "uploadDirWritable": is_writable_dir(UPLOAD_DIR),
+                "dataDirWritable": is_writable_dir(RUNTIME_DATA_DIR),
+            }
+        )
+
+    def send_pdf_health(self) -> None:
+        try:
+            pdf = render_pdf(
+                '<!doctype html><html><head><meta charset="utf-8"></head><body><h1>PDF OK</h1></body></html>',
+                360,
+                180,
+            )
+            self.send_json({"ok": True, "size": len(pdf), "header": pdf[:4].decode("ascii", errors="replace")})
+        except Exception as exc:
+            self.send_json({"ok": False, "error": str(exc)}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def create_user(self, user: dict) -> None:
         if user.get("role") != "admin":
@@ -795,6 +830,8 @@ def read_user_products(username: str) -> str:
         return path.read_text(encoding="utf-8")
     if username == DEFAULT_ADMIN_USERNAME and CUSTOM_PRODUCTS_FILE.exists():
         return CUSTOM_PRODUCTS_FILE.read_text(encoding="utf-8")
+    if username == DEFAULT_ADMIN_USERNAME and BUNDLED_CUSTOM_PRODUCTS_FILE.exists():
+        return BUNDLED_CUSTOM_PRODUCTS_FILE.read_text(encoding="utf-8")
     return json.dumps(default_custom_products(), ensure_ascii=False)
 
 
@@ -802,6 +839,17 @@ def write_user_products(username: str, data: dict) -> None:
     USER_PRODUCTS_DIR.mkdir(parents=True, exist_ok=True)
     path = USER_PRODUCTS_DIR / f"{user_file_stem(username)}.json"
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def is_writable_dir(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / f".write-test-{uuid.uuid4().hex}"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        return True
+    except OSError:
+        return False
 
 
 def user_quote_path(username: str) -> Path:

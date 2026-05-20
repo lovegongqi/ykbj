@@ -6,6 +6,7 @@ __pycache__/
 Thumbs.db
 generated-pdfs/
 assets/custom-products/
+runtime-data/
 data/users.json
 data/user-products/
 data/user-quotes/

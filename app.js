@@ -830,7 +830,7 @@
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'PDF 导出失败');
+        throw new Error(cleanExportError(errorText, response.status));
       }
 
       const result = await response.json();
@@ -846,6 +846,19 @@
       els.exportPdfButton.disabled = false;
       els.exportPdfButton.textContent = oldText;
     }
+  }
+
+  function cleanExportError(errorText, status) {
+    const raw = String(errorText || '').trim();
+    if (!raw) return `服务器返回 ${status}`;
+    if (/^\s*<!doctype html/i.test(raw) || /^\s*<html/i.test(raw)) {
+      if (status === 413 || /too large|request entity|payload/i.test(raw)) {
+        return '请求被反向代理拦截，需调大 client_max_body_size';
+      }
+      if (/login|登录/i.test(raw)) return '登录状态失效，请重新登录';
+      return `服务器返回 HTML 错误页（HTTP ${status}），请查看反向代理日志`;
+    }
+    return raw.replace(/\s+/g, ' ').slice(0, 240);
   }
 
   function buildExportHtml(sheet, css, width, height) {

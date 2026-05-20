@@ -136,6 +136,7 @@ http://服务器IP:8080
 server {
     listen 80;
     server_name 你的域名;
+    client_max_body_size 50m;
 
     location / {
         proxy_pass http://127.0.0.1:4173;
@@ -145,6 +146,26 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+```
+
+如果 PDF 导出时页面提示一整段 `<!DOCTYPE html>`，并且容器日志里没有 `POST /export-pdf`，说明请求没有到达容器，一般就是 Nginx、宝塔面板或云服务网关拦截了请求体。需要把网站的请求体限制调大，例如 Nginx 加：
+
+```nginx
+client_max_body_size 50m;
+```
+
+修改后重载：
+
+```bash
+nginx -t
+nginx -s reload
+```
+
+也可以直接测试容器内部 PDF 环境：
+
+```bash
+curl http://127.0.0.1:4173/api/health
+curl http://127.0.0.1:4173/api/pdf-health
 ```
 
 ## 文件说明
