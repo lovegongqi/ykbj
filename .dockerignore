@@ -1,0 +1,11 @@
+.git/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+generated-pdfs/
+assets/custom-products/
+data/users.json
+data/user-products/
+data/user-quotes/

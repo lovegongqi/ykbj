@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>产品管理</title>
+    <link rel="stylesheet" href="manage.css?v=20260520-10">
+  </head>
+  <body>
+    <header class="manage-header">
+      <div>
+        <h1>产品管理</h1>
+        <p id="manageStats">产品库加载中</p>
+      </div>
+      <div class="header-actions">
+        <div class="account-panel">
+          <span id="accountInfo">未登录</span>
+          <label id="activeUserLabel" hidden>操作用户
+            <select id="activeUserSelect"></select>
+          </label>
+          <button class="secondary-button" id="changePasswordButton" type="button">修改密码</button>
+          <button class="secondary-button" id="logoutButton" type="button">退出登录</button>
+        </div>
+        <a class="secondary-button" href="index.html">返回报价单</a>
+        <a class="secondary-button" id="quoteRecordsLink" href="quote-records.html" hidden>报价记录</a>
+      </div>
+    </header>
+
+    <main class="manage-layout">
+      <aside class="product-list-panel">
+        <label class="search-label">
+          搜索类别 / 产品
+          <input id="manageSearch" type="search" placeholder="品类、名称、型号">
+        </label>
+        <div class="list-section">
+          <div class="list-section-heading">
+            <strong>类别</strong>
+            <div class="sort-actions">
+              <button class="secondary-button" id="newCategoryButton" type="button">新增</button>
+              <button class="danger-button" id="deleteCategoryButton" type="button">删除</button>
+              <button class="secondary-button" id="moveCategoryUpButton" type="button">上移</button>
+              <button class="secondary-button" id="moveCategoryDownButton" type="button">下移</button>
+            </div>
+          </div>
+          <div class="category-list" id="categoryList"></div>
+        </div>
+        <div class="list-section">
+          <div class="list-section-heading">
+            <strong>产品</strong>
+            <div class="sort-actions">
+              <button class="secondary-button" id="newProductButton" type="button">新增</button>
+              <button class="danger-button" id="deleteProductButton" type="button">删除</button>
+              <button class="secondary-button" id="moveProductUpButton" type="button">上移</button>
+              <button class="secondary-button" id="moveProductDownButton" type="button">下移</button>
+            </div>
+          </div>
+          <div class="product-list" id="productList"></div>
+        </div>
+      </aside>
+
+      <section class="editor-panel">
+        <section class="import-panel">
+          <strong>产品快速导入</strong>
+          <button class="secondary-button" id="downloadTemplateButton" type="button">下载导入模板</button>
+          <button class="primary-button" id="importProductsButton" type="button">快速导入产品</button>
+          <input class="visually-hidden" id="importProductsInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <span id="importStatus"></span>
+        </section>
+
+        <section class="admin-panel" id="adminPanel" hidden>
+          <strong>新增普通用户</strong>
+          <input id="newUsername" type="text" placeholder="账号">
+          <input id="newPassword" type="password" placeholder="密码">
+          <input id="newDisplayName" type="text" placeholder="显示名称">
+          <span id="createUserStatus">填写账号和密码后自动保存</span>
+        </section>
+
+        <section class="user-panel" id="userPanel" hidden>
+          <div class="user-panel-heading">
+            <strong>用户列表</strong>
+            <span>管理员可切换、删除普通用户</span>
+          </div>
+          <div class="user-list" id="userList"></div>
+        </section>
+
+        <div class="editor-heading">
+          <div>
+            <p id="editorMode">编辑产品</p>
+            <h2 id="editorTitle">请选择产品</h2>
+          </div>
+          <div class="editor-actions">
+            <button class="primary-button" id="saveButton" type="button">保存修改</button>
+            <button class="secondary-button" id="resetButton" type="button">恢复原始</button>
+            <button class="danger-button" id="deleteButton" type="button">删除产品</button>
+          </div>
+        </div>
+
+        <form class="product-form" id="productForm">
+          <label>品类<input id="category" name="category" type="text" required></label>
+          <label>系列<input id="series" name="series" type="text"></label>
+          <label>品名<input id="name" name="name" type="text" required></label>
+          <label>型号<input id="model" name="model" type="text"></label>
+          <label>挂牌价<input id="price" name="price" type="number" min="0" step="1"></label>
+          <label class="image-field">产品图片
+            <div class="image-input-row">
+              <input id="productImage" name="productImage" type="text" placeholder="assets/cell-images/xxx.png 或图片 URL">
+              <button class="secondary-button" id="uploadImageButton" type="button">上传图片</button>
+              <input class="visually-hidden" id="imageUploadInput" type="file" accept="image/*">
+            </div>
+          </label>
+          <label class="wide">主要参数<textarea id="details" name="details" rows="9"></textarea></label>
+          <label class="wide">功能介绍<textarea id="features" name="features" rows="9"></textarea></label>
+        </form>
+
+        <div class="preview-card">
+          <div class="preview-image" id="previewImage">暂无图片</div>
+          <div>
+            <strong id="previewName">未选择产品</strong>
+            <span id="previewMeta"></span>
+            <span id="previewPrice"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data/catalog.js?v=20260520-10"></script>
+    <script src="manage.js?v=20260520-10"></script>
+  </body>
+</html>

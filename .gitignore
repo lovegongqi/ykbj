@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
+.env
+
+generated-pdfs/*
+!generated-pdfs/.gitkeep
+
+assets/custom-products/*
+!assets/custom-products/.gitkeep
+
+data/users.json
+data/user-products/*
+!data/user-products/.gitkeep
+data/user-quotes/*
+!data/user-quotes/.gitkeep

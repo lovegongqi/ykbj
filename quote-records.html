@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>报价记录</title>
+    <link rel="stylesheet" href="quote-records.css?v=20260520-1">
+  </head>
+  <body>
+    <header class="records-header">
+      <div>
+        <h1>报价记录</h1>
+        <p id="recordsStats">报价记录加载中</p>
+      </div>
+      <div class="header-actions">
+        <span id="accountInfo">未登录</span>
+        <a class="secondary-button" href="index.html">返回报价单</a>
+        <a class="secondary-button" href="manage.html">产品管理</a>
+        <button class="secondary-button" id="logoutButton" type="button">退出登录</button>
+      </div>
+    </header>
+
+    <main class="records-main">
+      <section class="records-panel">
+        <div class="records-toolbar">
+          <label>
+            搜索报价编号 / 用户 / 客户
+            <input id="recordSearch" type="search" placeholder="输入编号、账号、客户名称或电话">
+          </label>
+          <button class="secondary-button" id="refreshButton" type="button">刷新</button>
+        </div>
+
+        <div class="records-table-wrap">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>报价编号</th>
+                <th>报价用户</th>
+                <th>客户信息</th>
+                <th>金额</th>
+                <th>最后编辑</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="recordTableBody">
+              <tr><td colspan="6">加载中</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="quote-records.js?v=20260520-1"></script>
+  </body>
+</html>

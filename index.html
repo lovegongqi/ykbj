@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>怡口全屋净水报价单</title>
+    <link rel="stylesheet" href="styles.css?v=20260520-14">
+  </head>
+  <body>
+    <header class="toolbar no-print">
+      <div class="toolbar-title">
+        <h1>怡口全屋净水报价单</h1>
+        <p id="catalogStats">产品库加载中</p>
+      </div>
+      <div class="product-picker">
+        <div class="account-panel">
+          <span id="accountInfo">未登录</span>
+          <label id="activeUserLabel" hidden>操作用户
+            <select id="activeUserSelect"></select>
+          </label>
+          <button class="secondary-button" id="changePasswordButton" type="button">修改密码</button>
+          <button class="secondary-button" id="logoutButton" type="button">退出登录</button>
+        </div>
+        <div class="toolbar-actions">
+          <a class="secondary-button" href="manage.html">产品管理</a>
+          <a class="secondary-button" id="quoteRecordsLink" href="quote-records.html" hidden>报价记录</a>
+          <button class="secondary-button" id="loadTemplateButton" type="button">载入第1页示例</button>
+          <button class="secondary-button" id="clearQuoteButton" type="button">新建报价</button>
+          <button class="primary-button" id="exportPdfButton" type="button">导出PDF</button>
+          <button class="primary-button" id="printQuoteButton" type="button">打印报价单</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="quote-sheet" id="quoteSheet">
+        <div class="sheet-brand-row">
+          <div class="logo-box left-logo">
+            <img src="assets/cell-images/ID_F2800654C2F74CFCAF77C7A59B7947D3.png" alt="怡口">
+          </div>
+          <div class="logo-box right-logo">
+            <img src="assets/cell-images/ID_FDBD98A6A7FC453EA06700CAB992FFC6.png" alt="怡口">
+          </div>
+        </div>
+        <h2 class="sheet-title">报价单</h2>
+
+        <div class="seller-row">
+          <label>报价编号：<input id="quoteCode" type="text" readonly></label>
+          <label>报单人：<input id="sellerName" type="text"></label>
+          <label>手机：<input id="sellerPhone" type="tel"></label>
+        </div>
+
+        <div class="customer-grid">
+          <label>客户单位：<input id="customerCompany" type="text"></label>
+          <label>单位地址：<input id="customerAddress" type="text"></label>
+          <label>联 系 人：<input id="customerName" type="text"></label>
+          <label>联系电话：<input id="customerPhone" type="tel"></label>
+        </div>
+
+        <div class="table-scroll">
+          <table class="quote-table">
+            <colgroup>
+              <col class="col-index">
+              <col class="col-name">
+              <col class="col-model">
+              <col class="col-image">
+              <col class="col-unit">
+              <col class="col-price">
+              <col class="col-qty">
+              <col class="col-subtotal">
+              <col class="col-location">
+              <col class="col-filter">
+              <col class="col-detail">
+              <col class="col-feature">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>类别</th>
+                <th>型 号</th>
+                <th>图片</th>
+                <th>单位</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>金额</th>
+                <th>安装位置</th>
+                <th>滤芯使用时间</th>
+                <th>主要参数</th>
+                <th>功能介绍</th>
+              </tr>
+            </thead>
+            <tbody id="quoteTableBody">
+              <tr class="empty-row"><td colspan="12">产品加载中</td></tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td class="total-label" colspan="7">合计</td>
+                <td class="money-cell" id="subtotalCell" colspan="5">¥0</td>
+              </tr>
+              <tr>
+                <td class="total-label" colspan="7">门店优惠价</td>
+                <td class="money-cell" colspan="5">
+                  <input id="offerInput" class="money-input" type="text" inputmode="decimal" placeholder="">
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="sheet-bottom">
+          <div class="terms-grid">
+            <label>（1）<input id="term1" type="text" value="本报价单有效期30天，供货期5个工作日内"></label>
+            <label>（2）<input id="term2" type="text" value="交货方式：送货上门"></label>
+            <label>（3）<input id="term3" type="text" value="付款方式："></label>
+            <label>（4）<input id="term4" type="text" value="安装四要素：水源、电源、排水、空间"></label>
+            <label>（5）<input id="term5" type="text" value="其他说明："></label>
+          </div>
+
+          <div class="sheet-tail-image">
+            <img src="assets/cell-images/ID_B3517E1CDB244627A0C77B34528913CB.png" alt="报价单尾图">
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="image-dialog" id="imageDialog">
+      <button class="dialog-close no-print" id="closeImageDialog" type="button" aria-label="关闭">×</button>
+      <img id="largeImage" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">
+    </dialog>
+
+    <script src="data/catalog.js?v=20260520-12"></script>
+    <script src="app.js?v=20260520-15"></script>
+  </body>
+</html>
