@@ -30,6 +30,7 @@ USERS_FILE = RUNTIME_DATA_DIR / "users.json"
 BASE_CATALOG_FILE = ROOT / "data" / "catalog.json"
 USER_PRODUCTS_DIR = RUNTIME_DATA_DIR / "user-products"
 USER_QUOTES_DIR = RUNTIME_DATA_DIR / "user-quotes"
+USER_QUOTE_HISTORY_DIR = RUNTIME_DATA_DIR / "user-quote-history"
 SESSION_COOKIE = "quote_session"
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "66778899"
@@ -216,6 +217,12 @@ class QuoteHandler(SimpleHTTPRequestHandler):
                 return
             self.send_quote_records(user)
             return
+        if path == "/api/quote-record-state":
+            if not user:
+                self.send_json({"error": "unauthorized"}, HTTPStatus.UNAUTHORIZED)
+                return
+            self.send_quote_record_state(user)
+            return
         if path == "/api/import-template":
             if not user:
                 self.send_json({"error": "unauthorized"}, HTTPStatus.UNAUTHORIZED)
@@ -312,11 +319,26 @@ class QuoteHandler(SimpleHTTPRequestHandler):
         self.send_json({"users": public_users()})
 
     def send_quote_records(self, user: dict) -> None:
-        if user.get("role") != "admin":
-            self.send_json({"error": "forbidden"}, HTTPStatus.FORBIDDEN)
-            return
         query = (parse_qs(urlparse(self.path).query).get("q") or [""])[0]
-        self.send_json({"records": quote_records(query)})
+        self.send_json({"records": quote_records(query, user)})
+
+    def send_quote_record_state(self, user: dict) -> None:
+        query = parse_qs(urlparse(self.path).query)
+        quote_code = str((query.get("quoteCode") or [""])[0]).strip()
+        owner = normalize_username(str((query.get("owner") or query.get("user") or [""])[0]))
+        if user.get("role") != "admin":
+            owner = user.get("username", "")
+        elif not owner:
+            match = next((record for record in quote_records(quote_code, user) if record.get("quoteCode") == quote_code), None)
+            owner = match.get("owner", "") if match else ""
+        if not owner or not quote_code:
+            self.send_json({"error": "quote record not found"}, HTTPStatus.NOT_FOUND)
+            return
+        state = read_quote_history_state(owner, quote_code)
+        if not state:
+            self.send_json({"error": "quote record not found"}, HTTPStatus.NOT_FOUND)
+            return
+        self.send_json(state)
 
     def send_health(self) -> None:
         chrome = find_chrome()
@@ -331,6 +353,7 @@ class QuoteHandler(SimpleHTTPRequestHandler):
                 "exportDirWritable": is_writable_dir(EXPORT_DIR),
                 "uploadDirWritable": is_writable_dir(UPLOAD_DIR),
                 "dataDirWritable": is_writable_dir(RUNTIME_DATA_DIR),
+                "historyDirWritable": is_writable_dir(USER_QUOTE_HISTORY_DIR),
             }
         )
 
@@ -403,30 +426,30 @@ class QuoteHandler(SimpleHTTPRequestHandler):
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
 
     def delete_quote_record(self, user: dict) -> None:
-        if user.get("role") != "admin":
-            self.send_json({"error": "forbidden"}, HTTPStatus.FORBIDDEN)
-            return
         try:
             payload = self.read_json_body(50_000)
             username = normalize_username(str(payload.get("username", "")))
             quote_code = str(payload.get("quoteCode", "")).strip()
+            if user.get("role") != "admin":
+                username = user.get("username", "")
             if not username and quote_code:
-                match = next((record for record in quote_records(quote_code) if record.get("quoteCode") == quote_code), None)
+                match = next((record for record in quote_records(quote_code, user) if record.get("quoteCode") == quote_code), None)
                 username = match.get("owner", "") if match else ""
-            if not username:
+            if not username or not quote_code:
                 raise ValueError("报价记录不存在")
             if not get_user(username):
                 raise ValueError("用户不存在")
-            state = read_user_quote(username)
-            if quote_code and state.get("quoteCode") != quote_code:
+            if not delete_user_quote_history(username, quote_code):
                 raise ValueError("报价记录不存在")
 
-            empty = default_quote_state()
-            empty["owner"] = username
-            empty["updatedBy"] = user.get("username", DEFAULT_ADMIN_USERNAME)
-            empty["updatedAt"] = int(time.time())
-            write_user_quote(username, empty)
-            self.send_json({"ok": True, "records": quote_records()})
+            current = read_user_quote(username)
+            if current.get("quoteCode") == quote_code:
+                empty = default_quote_state()
+                empty["owner"] = username
+                empty["updatedBy"] = user.get("username", DEFAULT_ADMIN_USERNAME)
+                empty["updatedAt"] = int(time.time())
+                write_user_quote(username, empty)
+            self.send_json({"ok": True, "records": quote_records("", user)})
         except Exception as exc:
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
 
@@ -541,6 +564,7 @@ class QuoteHandler(SimpleHTTPRequestHandler):
             data["updatedBy"] = actor.get("username", target)
             data["updatedAt"] = int(time.time())
             write_user_quote(target, data)
+            upsert_user_quote_history(target, data)
             self.send_json({"ok": True})
         except Exception as exc:
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
@@ -724,14 +748,19 @@ def user_display_name(username: str) -> str:
     return user.get("displayName", username) if user else username
 
 
-def quote_records(query: str = "") -> list[dict]:
+def quote_records(query: str = "", viewer: dict | None = None) -> list[dict]:
     users = load_users().get("users", {})
     records = []
     for username, user in users.items():
-        state = read_user_quote(username)
-        if not quote_state_has_content(state):
+        if viewer and viewer.get("role") != "admin" and username != viewer.get("username"):
             continue
-        records.append(quote_record_from_state(username, user, state))
+        states = read_user_quote_history(username)
+        current = read_user_quote(username)
+        if quote_state_has_content(current) and not any(state.get("quoteCode") == current.get("quoteCode") for state in states):
+            states.append(current)
+        for state in states:
+            if quote_state_has_content(state):
+                records.append(quote_record_from_state(username, user, state))
 
     records.sort(key=lambda record: (record.get("updatedAt") or 0, record.get("quoteCode", "")), reverse=True)
     query = query.strip().lower()
@@ -783,8 +812,7 @@ def quote_record_from_state(username: str, user: dict, state: dict) -> dict:
 def quote_state_has_content(state: dict) -> bool:
     customer = state.get("customer") if isinstance(state.get("customer"), dict) else {}
     return bool(
-        state.get("quoteCode")
-        or state.get("quote")
+        state.get("quote")
         or state.get("offer")
         or any(str(value).strip() for value in customer.values())
     )
@@ -882,6 +910,10 @@ def user_quote_path(username: str) -> Path:
     return USER_QUOTES_DIR / f"{user_file_stem(username)}.json"
 
 
+def user_quote_history_path(username: str) -> Path:
+    return USER_QUOTE_HISTORY_DIR / f"{user_file_stem(username)}.json"
+
+
 def quote_file_mtime(username: str) -> int:
     path = user_quote_path(username)
     try:
@@ -911,9 +943,63 @@ def write_user_quote(username: str, data: dict) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def read_user_quote_history(username: str) -> list[dict]:
+    path = user_quote_history_path(username)
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    records = payload.get("records", []) if isinstance(payload, dict) else []
+    if not isinstance(records, list):
+        return []
+    return [normalize_quote_state(record) for record in records if isinstance(record, dict)]
+
+
+def write_user_quote_history(username: str, records: list[dict]) -> None:
+    USER_QUOTE_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    path = user_quote_history_path(username)
+    clean = [normalize_quote_state(record) for record in records if quote_state_has_content(normalize_quote_state(record))]
+    clean.sort(key=lambda record: (normalize_timestamp(record.get("updatedAt")), str(record.get("quoteCode") or "")), reverse=True)
+    path.write_text(json.dumps({"records": clean[:200]}, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def upsert_user_quote_history(username: str, data: dict) -> None:
+    state = normalize_quote_state(data)
+    quote_code = str(state.get("quoteCode") or "").strip()
+    if not quote_code or not quote_state_has_content(state):
+        return
+    records = [record for record in read_user_quote_history(username) if record.get("quoteCode") != quote_code]
+    records.append(state)
+    write_user_quote_history(username, records)
+
+
+def read_quote_history_state(username: str, quote_code: str) -> dict | None:
+    for record in read_user_quote_history(username):
+        if record.get("quoteCode") == quote_code:
+            return record
+    current = read_user_quote(username)
+    if current.get("quoteCode") == quote_code and quote_state_has_content(current):
+        return current
+    return None
+
+
+def delete_user_quote_history(username: str, quote_code: str) -> bool:
+    records = read_user_quote_history(username)
+    kept = [record for record in records if record.get("quoteCode") != quote_code]
+    deleted = len(kept) != len(records)
+    current = read_user_quote(username)
+    if current.get("quoteCode") == quote_code and quote_state_has_content(current):
+        deleted = True
+    if deleted:
+        write_user_quote_history(username, kept)
+    return deleted
+
+
 def remove_user_files(username: str) -> None:
     stem = user_file_stem(username)
-    for folder in (USER_PRODUCTS_DIR, USER_QUOTES_DIR):
+    for folder in (USER_PRODUCTS_DIR, USER_QUOTES_DIR, USER_QUOTE_HISTORY_DIR):
         path = folder / f"{stem}.json"
         try:
             if path.exists():
@@ -928,6 +1014,7 @@ def ensure_user_data_files(data: dict) -> None:
         return
     USER_PRODUCTS_DIR.mkdir(parents=True, exist_ok=True)
     USER_QUOTES_DIR.mkdir(parents=True, exist_ok=True)
+    USER_QUOTE_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
     for username in users:
         stem = user_file_stem(username)
         product_path = USER_PRODUCTS_DIR / f"{stem}.json"

@@ -17,3 +17,5 @@ data/user-products/*
 !data/user-products/.gitkeep
 data/user-quotes/*
 !data/user-quotes/.gitkeep
+data/user-quote-history/*
+!data/user-quote-history/.gitkeep

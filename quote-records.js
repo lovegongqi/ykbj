@@ -18,11 +18,6 @@
     if (!session) return;
     els.accountInfo.textContent = `${session.displayName || session.username}（${session.role === 'admin' ? '管理员' : '普通用户'}）`;
     bindEvents();
-    if (session.role !== 'admin') {
-      els.stats.textContent = '只有管理员可以查看报价记录';
-      els.tableBody.innerHTML = '<tr><td class="empty-record" colspan="6">当前账号没有权限查看报价记录</td></tr>';
-      return;
-    }
     await loadRecords();
   }
 
@@ -75,7 +70,8 @@
       return text.includes(query);
     });
 
-    els.stats.textContent = `共 ${records.length} 条报价记录，当前显示 ${visible.length} 条`;
+    const scope = session.role === 'admin' ? '所有账号' : '当前账号';
+    els.stats.textContent = `${scope}共 ${records.length} 条历史报价单，当前显示 ${visible.length} 条`;
     if (!visible.length) {
       els.tableBody.innerHTML = '<tr><td class="empty-record" colspan="6">暂无报价记录</td></tr>';
       return;
@@ -110,7 +106,7 @@
           </td>
           <td>
             <div class="record-actions">
-              <button class="secondary-button" type="button" data-open-record="${escapeAttr(record.owner)}">查看</button>
+              <button class="secondary-button" type="button" data-open-record="${escapeAttr(record.owner)}" data-quote-code="${escapeAttr(record.quoteCode || '')}">查看</button>
               <button class="danger-button" type="button" data-delete-record="${escapeAttr(record.owner)}" data-quote-code="${escapeAttr(record.quoteCode || '')}">删除</button>
             </div>
           </td>
@@ -122,8 +118,9 @@
   async function handleRecordClick(event) {
     const openButton = event.target.closest('[data-open-record]');
     if (openButton) {
-      localStorage.setItem('ecowaterActiveUser', openButton.dataset.openRecord);
-      window.location.href = 'index.html';
+      const quoteCode = openButton.dataset.quoteCode || '';
+      if (session.role === 'admin') localStorage.setItem('ecowaterActiveUser', openButton.dataset.openRecord);
+      window.location.href = `index.html${quoteCode ? `?quoteCode=${encodeURIComponent(quoteCode)}` : ''}`;
       return;
     }
 
@@ -131,7 +128,7 @@
     if (!deleteButton) return;
     const username = deleteButton.dataset.deleteRecord;
     const quoteCode = deleteButton.dataset.quoteCode || '';
-    if (!window.confirm(`确认删除报价记录 ${quoteCode || username}？\n该操作会清空该用户当前保存的报价单，不会删除用户或产品库。`)) return;
+    if (!window.confirm(`确认删除历史报价单 ${quoteCode || username}？\n该操作不会删除用户或产品库。`)) return;
 
     try {
       const response = await fetch('/api/delete-quote-record', {

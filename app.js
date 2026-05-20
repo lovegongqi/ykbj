@@ -6,6 +6,7 @@
   let session = null;
   let activeUser = '';
   let saveTimer = null;
+  let loadedHistoryQuote = false;
   const legacyStorageKeys = {
     quote: 'ecowaterQuoteItems',
     customer: 'ecowaterCustomer',
@@ -73,7 +74,7 @@
     const userLabel = session.role === 'admin' ? `当前操作：${activeUser}` : `当前账号：${session.username}`;
     els.catalogStats.textContent = `${userLabel}，${products.length} 个产品`;
     els.quoteCode.value = state.quoteCode;
-    saveQuoteStateDebounced();
+    if (!loadedHistoryQuote) saveQuoteStateDebounced();
     hydrateCustomer();
     hydrateTerms();
     displayOfferInput();
@@ -101,9 +102,9 @@
 
   function renderAccountControls() {
     els.accountInfo.textContent = `${session.displayName || session.username}（${session.role === 'admin' ? '管理员' : '普通用户'}）`;
+    els.quoteRecordsLink.hidden = false;
     if (session.role === 'admin') {
       els.activeUserLabel.hidden = false;
-      els.quoteRecordsLink.hidden = false;
       els.activeUserSelect.innerHTML = (session.users || []).map((user) => {
         const label = `${user.displayName || user.username} / ${user.username}`;
         return `<option value="${escapeAttr(user.username)}">${escapeHtml(label)}</option>`;
@@ -111,11 +112,20 @@
       els.activeUserSelect.value = activeUser;
     } else {
       els.activeUserLabel.hidden = true;
-      els.quoteRecordsLink.hidden = true;
     }
   }
 
   async function loadQuoteState() {
+    const historyQuoteCode = requestedHistoryQuoteCode();
+    if (historyQuoteCode) {
+      const historyState = await loadHistoryQuoteState(historyQuoteCode);
+      if (historyState) {
+        loadedHistoryQuote = true;
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return { ...defaultQuoteState(), ...historyState };
+      }
+    }
+
     const response = await fetch(apiUrl('/api/quote-state'), { cache: 'no-store' });
     if (!response.ok) return defaultQuoteState();
     const data = await response.json();
@@ -127,6 +137,21 @@
       }
     }
     return { ...defaultQuoteState(), ...data };
+  }
+
+  function requestedHistoryQuoteCode() {
+    return (new URLSearchParams(window.location.search).get('quoteCode') || '').trim();
+  }
+
+  async function loadHistoryQuoteState(quoteCode) {
+    try {
+      const response = await fetch(apiUrl(`/api/quote-record-state?quoteCode=${encodeURIComponent(quoteCode)}`), { cache: 'no-store' });
+      if (!response.ok) throw new Error('history quote unavailable');
+      return await response.json();
+    } catch (error) {
+      showToast('历史报价单读取失败');
+      return null;
+    }
   }
 
   function defaultQuoteState() {
@@ -144,8 +169,8 @@
   }
 
   function apiUrl(path) {
-    const query = session.role === 'admin' ? `?user=${encodeURIComponent(activeUser)}` : '';
-    return `${path}${query}`;
+    if (session.role !== 'admin') return path;
+    return `${path}${path.includes('?') ? '&' : '?'}user=${encodeURIComponent(activeUser)}`;
   }
 
   async function loadProducts() {
@@ -991,11 +1016,19 @@
     if (terms) terms.style.margin = '0 0 14px';
 
     const tail = clone.querySelector('.sheet-tail-image');
-    if (tail) tail.style.margin = '14px -18px 0';
+    if (tail) {
+      Object.assign(tail.style, {
+        aspectRatio: '1079 / 278',
+        height: 'auto',
+        margin: '14px -18px 0'
+      });
+    }
 
     host.appendChild(clone);
     document.body.appendChild(host);
-    const measured = Math.ceil(clone.getBoundingClientRect().height + 4);
+    const cloneRect = clone.getBoundingClientRect();
+    const tailRect = tail ? tail.getBoundingClientRect() : null;
+    const measured = Math.ceil(((tailRect ? tailRect.bottom : cloneRect.bottom) - cloneRect.top) + 1);
     host.remove();
     return Math.max(320, measured);
   }
@@ -1014,7 +1047,7 @@
         .logo-box { height: 184px !important; }
         .logo-box img { max-height: 180px !important; }
         .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+        .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
         .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
         .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
         .terms-grid { margin: 0 0 14px !important; }
@@ -1030,7 +1063,7 @@
       .logo-box { height: 184px !important; }
       .logo-box img { max-height: 180px !important; }
       .sheet-title { font-size: 34px !important; margin: 4px 0 12px !important; }
-      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
+      .sheet-tail-image { align-items: flex-start !important; aspect-ratio: 1079 / 278 !important; height: auto !important; margin: 14px -18px 0 !important; min-height: 0 !important; overflow: hidden !important; }
       .sheet-tail-image img { flex: 0 0 auto !important; height: auto !important; max-height: none !important; width: 100% !important; }
       .sheet-bottom { display: block !important; flex: 0 0 auto !important; margin-top: 12px !important; }
       .terms-grid { margin: 0 0 14px !important; }
