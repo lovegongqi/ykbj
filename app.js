@@ -807,6 +807,13 @@
     const sheet = document.getElementById('quoteSheet');
     if (!sheet) return;
 
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.opener = null;
+      pdfWindow.document.title = '正在生成PDF';
+      pdfWindow.document.body.innerHTML = '<p style="font-family: Microsoft YaHei, Arial, sans-serif; padding: 24px;">PDF 正在生成，请稍候...</p>';
+    }
+
     els.exportPdfButton.disabled = true;
     const oldText = els.exportPdfButton.textContent;
     els.exportPdfButton.textContent = '正在导出...';
@@ -836,9 +843,10 @@
       const result = await response.json();
       const url = result.url;
       if (!url) throw new Error('PDF 地址为空');
-      window.location.href = url;
-      showToast('PDF 已打开');
+      openGeneratedPdf(url, pdfWindow);
+      showToast('PDF 已在新标签页打开');
     } catch (error) {
+      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
       console.error(error);
       const message = error.message || '请查看服务器日志';
       showToast(`PDF 导出失败：${message.slice(0, 80)}`);
@@ -846,6 +854,15 @@
       els.exportPdfButton.disabled = false;
       els.exportPdfButton.textContent = oldText;
     }
+  }
+
+  function openGeneratedPdf(url, pdfWindow) {
+    if (pdfWindow && !pdfWindow.closed) {
+      pdfWindow.location.href = url;
+      return;
+    }
+    const opened = window.open(url, '_blank', 'noopener');
+    if (!opened) window.location.href = url;
   }
 
   function encodeBase64Utf8(value) {
