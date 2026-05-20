@@ -767,9 +767,12 @@ textarea:focus {
   .toolbar {
     gap: 10px;
     grid-template-columns: 1fr;
+    margin: 0 10px;
     max-height: 56vh;
+    max-width: none;
     overflow: auto;
     padding: 10px 12px;
+    width: 1180px;
   }
 
   .toolbar-title h1 {
@@ -785,7 +788,7 @@ textarea:focus {
     align-items: stretch;
     display: grid;
     gap: 7px;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .account-panel span,
@@ -802,7 +805,7 @@ textarea:focus {
   .toolbar-actions {
     display: grid;
     gap: 7px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     width: 100%;
   }
 

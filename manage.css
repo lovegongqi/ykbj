@@ -551,7 +551,7 @@ textarea:focus {
 
   .account-panel {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .account-panel span,
@@ -572,7 +572,8 @@ textarea:focus {
   .header-actions .secondary-button,
   .header-actions .danger-button,
   .account-panel .secondary-button {
-    flex: 1 1 calc(50% - 7px);
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .manage-layout {
