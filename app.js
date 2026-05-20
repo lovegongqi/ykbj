@@ -905,7 +905,11 @@
   }
 
   function downloadPdfUrl(url, filename) {
-    const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}filename=${encodeURIComponent(filename || '报价单.pdf')}`;
+    const params = new URLSearchParams({
+      filename: filename || '报价单.pdf',
+      download: '1'
+    });
+    const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}${params.toString()}`;
     if (isAppleMobileBrowser()) {
       window.location.href = downloadUrl;
       return;

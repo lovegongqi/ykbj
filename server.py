@@ -483,11 +483,13 @@ class QuoteHandler(SimpleHTTPRequestHandler):
 
         query = parse_qs(urlparse(self.path).query)
         filename = sanitize_filename((query.get("filename") or ["报价单.pdf"])[0])
+        force_download = (query.get("download") or [""])[0] == "1"
         content = pdf_path.read_bytes()
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Type", "application/octet-stream" if force_download else "application/pdf")
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote_filename(filename)}")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(content)
 
