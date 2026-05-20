@@ -820,9 +820,10 @@ textarea:focus {
   }
 
   .toolbar-actions {
-    display: grid;
+    display: flex;
+    flex-wrap: nowrap;
     gap: 7px;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    justify-content: flex-end;
     width: 100%;
   }
 
@@ -832,6 +833,12 @@ textarea:focus {
     padding: 0 8px;
     white-space: nowrap;
     width: 100%;
+  }
+
+  .toolbar-actions .primary-button,
+  .toolbar-actions .secondary-button {
+    min-width: 96px;
+    width: auto;
   }
 
   .page {
