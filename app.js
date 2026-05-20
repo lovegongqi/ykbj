@@ -853,6 +853,7 @@
       const height = measureCompactExportHeight(sheet, width);
       const html = buildExportHtml(sheet, css, width, height);
       const filename = buildPdfFilename();
+      const useDownloadUrl = isAppleMobileBrowser();
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -860,13 +861,22 @@
           htmlBase64: encodeBase64Utf8(html),
           width,
           height,
-          filename
+          filename,
+          returnUrl: useDownloadUrl
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(cleanExportError(errorText, response.status));
+      }
+
+      if (useDownloadUrl) {
+        const data = await response.json();
+        if (!data.url) throw new Error('PDF download URL missing');
+        downloadPdfUrl(data.url, data.filename || filename);
+        showToast('PDF 已开始下载');
+        return;
       }
 
       const blob = await response.blob();
@@ -892,6 +902,27 @@
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  function downloadPdfUrl(url, filename) {
+    const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}filename=${encodeURIComponent(filename || '报价单.pdf')}`;
+    if (isAppleMobileBrowser()) {
+      window.location.href = downloadUrl;
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename || '报价单.pdf';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function isAppleMobileBrowser() {
+    const platform = navigator.platform || '';
+    const userAgent = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }
 
   function encodeBase64Utf8(value) {

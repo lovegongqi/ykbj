@@ -187,6 +187,10 @@ class QuoteHandler(SimpleHTTPRequestHandler):
             self.redirect("/login.html")
             return
 
+        if path.startswith("/generated-pdfs/"):
+            self.send_generated_pdf(path)
+            return
+
         user = self.current_user()
         if path == "/api/custom-products":
             if not user:
@@ -466,6 +470,26 @@ class QuoteHandler(SimpleHTTPRequestHandler):
         self.send_response(HTTPStatus.FOUND)
         self.send_header("Location", location)
         self.end_headers()
+
+    def send_generated_pdf(self, path: str) -> None:
+        name = Path(path).name
+        if not name or name != Path(name).name:
+            self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+            return
+        pdf_path = EXPORT_DIR / name
+        if not pdf_path.exists() or not pdf_path.is_file():
+            self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+            return
+
+        query = parse_qs(urlparse(self.path).query)
+        filename = sanitize_filename((query.get("filename") or ["报价单.pdf"])[0])
+        content = pdf_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote_filename(filename)}")
+        self.end_headers()
+        self.wfile.write(content)
 
     def send_custom_products(self) -> None:
         try:
