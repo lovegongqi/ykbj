@@ -12,7 +12,7 @@ https://github.com/lovegongqi/ykbj.git
 
 ```text
 账号：admin
-密码：360304437
+密码：66778899
 ```
 
 首次上线后建议立即在网页内修改管理员密码。

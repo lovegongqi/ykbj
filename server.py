@@ -30,7 +30,8 @@ USER_PRODUCTS_DIR = ROOT / "data" / "user-products"
 USER_QUOTES_DIR = ROOT / "data" / "user-quotes"
 SESSION_COOKIE = "quote_session"
 DEFAULT_ADMIN_USERNAME = "admin"
-DEFAULT_ADMIN_PASSWORD = "360304437"
+DEFAULT_ADMIN_PASSWORD = "66778899"
+LEGACY_DEFAULT_ADMIN_PASSWORDS = ("360304437",)
 SESSIONS: dict[str, str] = {}
 
 
@@ -604,9 +605,14 @@ def ensure_users_file() -> dict:
             "createdAt": int(time.time()),
         }
         changed = True
-    elif admin.get("role") != "admin":
-        admin["role"] = "admin"
-        changed = True
+    else:
+        if admin.get("role") != "admin":
+            admin["role"] = "admin"
+            changed = True
+        password_hash = str(admin.get("passwordHash", ""))
+        if not password_hash or any(verify_password(password, password_hash) for password in LEGACY_DEFAULT_ADMIN_PASSWORDS):
+            admin["passwordHash"] = hash_password(DEFAULT_ADMIN_PASSWORD)
+            changed = True
 
     data = {"users": users}
     if changed or not USERS_FILE.exists():
